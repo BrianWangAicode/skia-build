@@ -1,11 +1,4 @@
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - ".github/workflows/*"
-      - "script/*"
-      - "patches/*"
   workflow_dispatch:
     inputs:
       skip_release:
@@ -21,42 +14,29 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        build_type: [Release, Debug]
+        build_type: [Release]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y python3
       - run: sudo ./script/prepare_linux.sh
-      - run: python3 script/check_release.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
-        if: ${{ github.event.inputs.skip_release != 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: python3 script/checkout.py --version ${{ env.version }}
       - run: python3 script/build.py --build-type ${{ matrix.build_type }}
       - run: python3 script/archive.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
       - uses: actions/upload-artifact@v4
         with:
-          name: Skia-${{ env.version }}-linux-${{ matrix.build_type }}-x64.zip
-          path: '*.zip'
-      - run: python3 script/release.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
-        if: ${{ github.event.inputs.skip_release != 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: Skia-${{ env.version }}-linux-${{ matrix.build_type }}-x64
+          path: skia/out/Release-x64/
 
   windows:
     runs-on: windows-2022
     strategy:
       matrix:
-        build_type: [Release, Debug]
+        build_type: [Release]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
-      - shell: bash
-        run: python3 script/check_release.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
-        if: ${{ github.event.inputs.skip_release != 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: microsoft/setup-msbuild@v2
-      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: egor-tensin/vs-shell@v2
       - shell: bash
         run: python3 script/checkout.py --version ${{ env.version }}
       - shell: bash
@@ -65,10 +45,5 @@ jobs:
         run: python3 script/archive.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
       - uses: actions/upload-artifact@v4
         with:
-          name: Skia-${{ env.version }}-windows-${{ matrix.build_type }}-x64.zip
-          path: '*.zip'
-      - shell: bash
-        run: python3 script/release.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
-        if: ${{ github.event.inputs.skip_release != 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: Skia-${{ env.version }}-windows-${{ matrix.build_type }}-x64
+          path: skia/out/Release-x64/
