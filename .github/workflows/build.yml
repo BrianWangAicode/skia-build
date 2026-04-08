@@ -14,7 +14,7 @@ on:
         default: 'false'
 
 env:
-  version: m93-87e8842e8c
+  version: chrome/m137
 
 jobs:
   linux:
