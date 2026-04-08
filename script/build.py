@@ -1,4 +1,3 @@
-
 #! /usr/bin/env python3
 
 import common, os, subprocess, sys
@@ -10,6 +9,11 @@ def main():
   machine = common.machine()
   system = common.system()
   ndk = common.ndk()  
+
+  # 只支持 Windows 和 Linux，其他系统直接退出
+  if system not in ['windows', 'linux']:
+    print(f"Unsupported system: {system}. Only Windows and Linux are supported.")
+    return 1
 
   if build_type == 'Debug':
     args = ['is_debug=true']
@@ -35,19 +39,7 @@ def main():
     'skia_enable_skottie=true'
   ]
 
-  if 'macos' == system:
-    args += [
-      'skia_use_system_freetype2=false',
-      # 'skia_enable_gpu=true',
-      # 'skia_use_gl=true',
-      'skia_use_metal=true',
-      'extra_cflags_cc=["-frtti"]'
-    ]
-    if 'arm64' == machine:
-      args += ['extra_cflags=["-stdlib=libc++"]']
-    else:
-      args += ['extra_cflags=["-stdlib=libc++", "-mmacosx-version-min=10.13"]']
-  elif 'linux' == system:
+  if 'linux' == system:
     args += [
       'skia_use_system_freetype2=true',
       # 'skia_enable_gpu=true',
@@ -61,11 +53,6 @@ def main():
       # 'skia_use_angle=true',
       'skia_use_direct3d=true',
       'extra_cflags=["-DSK_FONT_HOST_USE_SYSTEM_SETTINGS", "/MD"]',
-    ]
-  elif 'android' == system:
-    args += [
-      'skia_use_system_freetype2=false',
-      'ndk="'+ ndk + '"'
     ]
 
   out = os.path.join('out', build_type + '-' + machine)
