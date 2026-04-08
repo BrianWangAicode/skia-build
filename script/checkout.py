@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import argparse, common, os, pathlib, platform, re, subprocess, sys
+import argparse, common, os, pathlib, platform, re, subprocess, sys, time
 
 def main():
   os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -8,9 +8,17 @@ def main():
   parser = common.create_parser(True)
   args = parser.parse_args()
 
-  # Clone depot_tools
+  # Clone depot_tools with retry
   if not os.path.exists("depot_tools"):
-    subprocess.check_call(["git", "clone", "https://chromium.googlesource.com/chromium/tools/depot_tools.git", "depot_tools"])
+    for i in range(3):
+      try:
+        subprocess.check_call(["git", "clone", "https://chromium.googlesource.com/chromium/tools/depot_tools.git", "depot_tools"])
+        break
+      except:
+        if i == 2:
+          raise
+        print(f"depot_tools clone failed, retry {i+1}/3...")
+        time.sleep(10)
 
   # Clone Skia
   match = re.match('(m\\d+)(?:-([0-9a-f]+)(?:-([1-9][0-9]*))?)?', args.version)
@@ -43,9 +51,11 @@ def main():
 
   # Apply patches
   subprocess.check_call(["git", "reset", "--hard"])
-  for x in pathlib.Path(os.pardir, 'patches').glob('*.patch'):
-    print("> Applying", x)
-    subprocess.check_call(["git", "apply", str(x)])
+  patches_dir = pathlib.Path(os.pardir, 'patches')
+  if patches_dir.exists():
+    for x in patches_dir.glob('*.patch'):
+      print("> Applying", x)
+      subprocess.check_call(["git", "apply", str(x)])
 
   # git deps
   if 'windows' == common.system():
