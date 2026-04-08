@@ -7,7 +7,7 @@ on:
         default: 'false'
 
 env:
-  version: chrome/m137
+  version: m147-4502f88af90
 
 jobs:
   linux:
