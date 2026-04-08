@@ -18,22 +18,22 @@ env:
 
 jobs:
   linux:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         build_type: [Release, Debug]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: sudo ./script/prepare_linux.sh
       - run: python3 script/check_release.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
         if: ${{ github.event.inputs.skip_release != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: PATH=/usr/lib/binutils-2.26/bin:$PATH python3 script/checkout.py --version ${{ env.version }}
-      - run: PATH=/usr/lib/binutils-2.26/bin:$PATH python3 script/build.py --build-type ${{ matrix.build_type }}
-      - run: PATH=/usr/lib/binutils-2.26/bin:$PATH python3 script/archive.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
-      - uses: actions/upload-artifact@v2
+      - run: python3 script/checkout.py --version ${{ env.version }}
+      - run: python3 script/build.py --build-type ${{ matrix.build_type }}
+      - run: python3 script/archive.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
+      - uses: actions/upload-artifact@v4
         with:
           name: Skia-${{ env.version }}-linux-${{ matrix.build_type }}-x64.zip
           path: '*.zip'
@@ -43,19 +43,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       matrix:
         build_type: [Release, Debug]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - shell: bash
         run: python3 script/check_release.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
         if: ${{ github.event.inputs.skip_release != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: microsoft/setup-msbuild@v1
+      - uses: microsoft/setup-msbuild@v2
       - uses: ilammy/msvc-dev-cmd@v1
       - shell: bash
         run: python3 script/checkout.py --version ${{ env.version }}
@@ -63,7 +63,7 @@ jobs:
         run: python3 script/build.py --build-type ${{ matrix.build_type }}
       - shell: bash
         run: python3 script/archive.py --version ${{ env.version }} --build-type ${{ matrix.build_type }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: Skia-${{ env.version }}-windows-${{ matrix.build_type }}-x64.zip
           path: '*.zip'
